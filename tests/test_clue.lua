@@ -2402,16 +2402,45 @@ T['Reproducing keys']['Operator-pending mode'] = new_set({
       -- Make user keymap
       child.api.nvim_set_keymap('o', 'if', 'iw', {})
       child.api.nvim_set_keymap('o', 'iF', 'ip', {})
-
-      -- Register trigger. Use zero delay in window to account for possible
-      -- clearance of `v:count` and `v:register` inside window update.
-      load_module({ triggers = { { mode = 'o', keys = 'i' } }, window = { delay = 0 } })
-      validate_trigger_keymap('o', 'i')
     end,
+  },
+  parametrize = {
+    {
+      function ()
+        -- Register trigger. Use zero delay in window to account for possible
+        -- clearance of `v:count` and `v:register` inside window update.
+        load_module({ triggers = { { mode = 'o', keys = 'i' } }, window = { delay = 0 } })
+        validate_trigger_keymap('o', 'i')
+      end
+    },
+    {
+      function ()
+        load_module({ triggers = {}, window = { delay = 0 } })
+        child.lua([[
+            vim.api.nvim_create_autocmd('ModeChanged', {
+                pattern = '*:no*',
+                callback = function ()
+                    if vim.fn.has('nvim-0.10') == 1 and vim.fn.state('m') ~= '' then
+                        return
+                    end
+                    if vim.b.miniclue_disable_autocmd_triggers then
+                        return
+                    end
+
+                    vim.b.miniclue_disable_autocmd_triggers = true
+                    require('mini.clue').start_query_process({ mode = 'o', keys = '' })
+                    vim.schedule(function() vim.b.miniclue_disable_autocmd_triggers = false end)
+                end
+            })
+        ]])
+      end
+    }
   },
 })
 
-T['Reproducing keys']['Operator-pending mode']['c'] = function()
+T['Reproducing keys']['Operator-pending mode']['c'] = function(mod_setup)
+  mod_setup()
+
   validate_edit1d('aa bb cc', 3, { 'c', 'i', 'w', 'dd' }, 'aa dd cc', 5)
 
   -- Dot-repeat
@@ -2428,7 +2457,9 @@ T['Reproducing keys']['Operator-pending mode']['c'] = function()
   validate_edit1d('aa bb cc', 0, { 'c2', 'i', 'w', 'dd' }, 'ddbb cc', 2)
 end
 
-T['Reproducing keys']['Operator-pending mode']['d'] = function()
+T['Reproducing keys']['Operator-pending mode']['d'] = function(mod_setup)
+  mod_setup()
+
   validate_edit1d('aa bb cc', 3, { 'd', 'i', 'w' }, 'aa  cc', 3)
 
   -- Dot-rpeat
@@ -2445,7 +2476,9 @@ T['Reproducing keys']['Operator-pending mode']['d'] = function()
   validate_edit1d('aa bb cc', 0, { 'd2', 'i', 'w' }, 'bb cc', 0)
 end
 
-T['Reproducing keys']['Operator-pending mode']['y'] = function()
+T['Reproducing keys']['Operator-pending mode']['y'] = function(mod_setup)
+  mod_setup()
+
   validate_edit1d('aa bb cc', 3, { 'y', 'i', 'w', 'P' }, 'aa bbbb cc', 4)
 
   -- Should respect register
@@ -2459,7 +2492,9 @@ T['Reproducing keys']['Operator-pending mode']['y'] = function()
   validate_edit1d('aa bb cc', 0, { 'y2', 'i', 'w', 'P' }, 'aa aa bb cc', 2)
 end
 
-T['Reproducing keys']['Operator-pending mode']['~'] = function()
+T['Reproducing keys']['Operator-pending mode']['~'] = function(mod_setup)
+  mod_setup()
+
   child.o.tildeop = true
 
   validate_edit1d('aa bb', 0, { '~', 'i', 'w' }, 'AA bb', 0)
@@ -2476,7 +2511,9 @@ T['Reproducing keys']['Operator-pending mode']['~'] = function()
   validate_edit1d('aa bb cc', 0, { '~3', 'i', 'w' }, 'AA BB cc', 0)
 end
 
-T['Reproducing keys']['Operator-pending mode']['g~'] = function()
+T['Reproducing keys']['Operator-pending mode']['g~'] = function(mod_setup)
+  mod_setup()
+
   validate_edit1d('aa bb', 0, { 'g~', 'i', 'w' }, 'AA bb', 0)
   validate_edit1d('aa bb', 1, { 'g~', 'i', 'w' }, 'AA bb', 0)
   validate_edit1d('aa bb', 3, { 'g~', 'i', 'w' }, 'aa BB', 3)
@@ -2491,7 +2528,9 @@ T['Reproducing keys']['Operator-pending mode']['g~'] = function()
   validate_edit1d('aa bb cc', 0, { 'g~3', 'i', 'w' }, 'AA BB cc', 0)
 end
 
-T['Reproducing keys']['Operator-pending mode']['gu'] = function()
+T['Reproducing keys']['Operator-pending mode']['gu'] = function(mod_setup)
+  mod_setup()
+
   validate_edit1d('AA BB', 0, { 'gu', 'i', 'w' }, 'aa BB', 0)
   validate_edit1d('AA BB', 1, { 'gu', 'i', 'w' }, 'aa BB', 0)
   validate_edit1d('AA BB', 3, { 'gu', 'i', 'w' }, 'AA bb', 3)
@@ -2506,7 +2545,9 @@ T['Reproducing keys']['Operator-pending mode']['gu'] = function()
   validate_edit1d('AA BB CC', 0, { 'gu3', 'i', 'w' }, 'aa bb CC', 0)
 end
 
-T['Reproducing keys']['Operator-pending mode']['gU'] = function()
+T['Reproducing keys']['Operator-pending mode']['gU'] = function(mod_setup)
+  mod_setup()
+
   validate_edit1d('aa bb', 0, { 'gU', 'i', 'w' }, 'AA bb', 0)
   validate_edit1d('aa bb', 1, { 'gU', 'i', 'w' }, 'AA bb', 0)
   validate_edit1d('aa bb', 3, { 'gU', 'i', 'w' }, 'aa BB', 3)
@@ -2521,7 +2562,9 @@ T['Reproducing keys']['Operator-pending mode']['gU'] = function()
   validate_edit1d('aa bb cc', 0, { 'gU3', 'i', 'w' }, 'AA BB cc', 0)
 end
 
-T['Reproducing keys']['Operator-pending mode']['gq'] = function()
+T['Reproducing keys']['Operator-pending mode']['gq'] = function(mod_setup)
+  mod_setup()
+
   child.lua([[_G.formatexpr = function()
     local from, to = vim.v.lnum, vim.v.lnum + vim.v.count - 1
     local new_lines = {}
@@ -2554,7 +2597,9 @@ T['Reproducing keys']['Operator-pending mode']['gq'] = function()
   )
 end
 
-T['Reproducing keys']['Operator-pending mode']['gw'] = function()
+T['Reproducing keys']['Operator-pending mode']['gw'] = function(mod_setup)
+  mod_setup()
+
   child.o.textwidth = 5
 
   validate_edit({ 'aaa aaa', '', 'bb' }, { 1, 0 }, { 'gw', 'i', 'p' }, { 'aaa', 'aaa', '', 'bb' }, { 1, 0 })
@@ -2581,7 +2626,9 @@ T['Reproducing keys']['Operator-pending mode']['gw'] = function()
   )
 end
 
-T['Reproducing keys']['Operator-pending mode']['g?'] = function()
+T['Reproducing keys']['Operator-pending mode']['g?'] = function(mod_setup)
+  mod_setup()
+
   validate_edit1d('aa bb', 0, { 'g?', 'i', 'w' }, 'nn bb', 0)
   validate_edit1d('aa bb', 1, { 'g?', 'i', 'w' }, 'nn bb', 0)
   validate_edit1d('aa bb', 3, { 'g?', 'i', 'w' }, 'aa oo', 3)
@@ -2596,7 +2643,9 @@ T['Reproducing keys']['Operator-pending mode']['g?'] = function()
   validate_edit1d('aa bb cc', 0, { 'g?3', 'i', 'w' }, 'nn oo cc', 0)
 end
 
-T['Reproducing keys']['Operator-pending mode']['!'] = function()
+T['Reproducing keys']['Operator-pending mode']['!'] = function(mod_setup)
+  mod_setup()
+
   validate_edit({ 'cc', 'bb', '', 'aa' }, { 1, 0 }, { '!', 'i', 'p', 'sort<CR>' }, { 'bb', 'cc', '', 'aa' }, { 1, 0 })
 
   -- Dot-repeat
@@ -2621,7 +2670,9 @@ T['Reproducing keys']['Operator-pending mode']['!'] = function()
   )
 end
 
-T['Reproducing keys']['Operator-pending mode']['='] = function()
+T['Reproducing keys']['Operator-pending mode']['='] = function(mod_setup)
+  mod_setup()
+
   validate_edit({ 'aa', '\taa', '', 'bb' }, { 1, 0 }, { '=', 'i', 'p' }, { 'aa', 'aa', '', 'bb' }, { 1, 0 })
 
   -- Dot-repeat
@@ -2646,7 +2697,9 @@ T['Reproducing keys']['Operator-pending mode']['='] = function()
   )
 end
 
-T['Reproducing keys']['Operator-pending mode']['>'] = function()
+T['Reproducing keys']['Operator-pending mode']['>'] = function(mod_setup)
+  mod_setup()
+
   validate_edit({ 'aa', '', 'bb' }, { 1, 0 }, { '>', 'i', 'p' }, { '\taa', '', 'bb' }, { 1, 0 })
 
   -- Dot-repeat
@@ -2659,7 +2712,9 @@ T['Reproducing keys']['Operator-pending mode']['>'] = function()
   validate_edit({ 'aa', '', 'bb', '', 'cc' }, { 1, 0 }, { '>3', 'i', 'p' }, { '\taa', '', '\tbb', '', 'cc' }, { 1, 0 })
 end
 
-T['Reproducing keys']['Operator-pending mode']['<'] = function()
+T['Reproducing keys']['Operator-pending mode']['<'] = function(mod_setup)
+  mod_setup()
+
   validate_edit({ '\t\taa', '', 'bb' }, { 1, 0 }, { '<', 'i', 'p' }, { '\taa', '', 'bb' }, { 1, 0 })
 
   -- Dot-repeat
@@ -2678,7 +2733,9 @@ T['Reproducing keys']['Operator-pending mode']['<'] = function()
   )
 end
 
-T['Reproducing keys']['Operator-pending mode']['zf'] = function()
+T['Reproducing keys']['Operator-pending mode']['zf'] = function(mod_setup)
+  mod_setup()
+
   local validate = function(keys, ref_last_folded_line)
     local lines = { 'aa', 'aa', '', 'bb', '', 'cc' }
     set_lines(lines)
@@ -2702,7 +2759,9 @@ T['Reproducing keys']['Operator-pending mode']['zf'] = function()
   validate({ 'zf3', 'i', 'p' }, 4)
 end
 
-T['Reproducing keys']['Operator-pending mode']['g@'] = function()
+T['Reproducing keys']['Operator-pending mode']['g@'] = function(mod_setup)
+  mod_setup()
+
   child.o.operatorfunc = 'v:lua.operatorfunc'
 
   -- Charwise
@@ -2751,7 +2810,9 @@ T['Reproducing keys']['Operator-pending mode']['g@'] = function()
   )
 end
 
-T['Reproducing keys']['Operator-pending mode']['works with operator and textobject from triggers'] = function()
+T['Reproducing keys']['Operator-pending mode']['works with operator and textobject from triggers'] = function(mod_setup)
+  mod_setup()
+
   load_module({ triggers = { { mode = 'n', keys = 'g' }, { mode = 'o', keys = 'i' } } })
   validate_trigger_keymap('n', 'g')
   validate_trigger_keymap('o', 'i')
@@ -2766,7 +2827,9 @@ T['Reproducing keys']['Operator-pending mode']['works with operator and textobje
   validate_edit({ 'cc', 'bb', '', 'aa' }, { 1, 0 }, { 'g@', 'i', 'p' }, { 'bb', 'cc', '', 'aa' }, { 1, 0 })
 end
 
-T['Reproducing keys']['Operator-pending mode']['respects forced submode'] = function()
+T['Reproducing keys']['Operator-pending mode']['respects forced submode'] = function(mod_setup)
+  mod_setup()
+
   load_module({ triggers = { { mode = 'o', keys = '`' } } })
   validate_trigger_keymap('o', '`')
 
